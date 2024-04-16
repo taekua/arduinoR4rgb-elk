@@ -1,7 +1,6 @@
 #include <ArduinoBLE.h>
 
 const char * mainControllerMac = "BE:16:75:00:33:1C"; //This is the address which we will connect into to turn on/off the lights
-char * bleServiceUuid = ""; //This can be hardcoded but we will try to discover it "a624bfba-50a4d532-0b4e-34d73e892943"; 
 char * targetCharacteristicUuid = "fff3";
 
 float voltageThreshold = 1.0; //Because there might be some noise, we dont want to use 0, this means when this numer of volts is
@@ -73,7 +72,6 @@ void powerOff(BLEDevice peripheral) {
     }
   }
 }
-
 
 BLECharacteristic discoveryProcess(BLEDevice peripheral) {  
   Serial.println("Discovering attributes ...");
