@@ -7,9 +7,7 @@ This program is provides as is, under no circumstances I will be liable for anyt
 This code is to be flashed into an arduino R4 with bluetooth capabilities. it uses the arduinoBLE library and
 it relies on an analog sensor I tested with voltage sensor.
 
-Ideally all you need to do at this time is find the mac address of your (ELK-BLEDOM) RGB controller and replace it on the 
-cketch file before flashing/uploading to the arduino.
+In the event you have multiple main controllered (ELK-Bledom) close to where you park or within range of the arduino you will need to find the mac address of (ELK-BLEDOM) RGB controller you want to control and replace it on the 
+sketch file before flashing/uploading to the arduino.
 
-
-
-TODO: scan by bluetooth name and if there's only 1 device use that as MAC
+If you have no more than one ELK-Bledom device within the reach of the arduino, you should not need to modify anything!
