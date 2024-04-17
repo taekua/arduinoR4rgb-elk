@@ -1,10 +1,12 @@
 #include <ArduinoBLE.h>
 
+
 char * mainControllerName = "ELK-BLEDOM"; //This is the name
 char * mainControllerMac = ""; //If you have multiple ELK-Bledoms this is needed use a bluetooth scanner to get this from the controller you want to bind this to.
                               //"BE:16:75:00:33:1C"; //This is the address which we will connect into to turn on/off the lights
 char * targetCharacteristicUuid = "fff3"; //This is hardcoded as the characteristic we need to write.
 
+float average_vIn = 0; //we will store the average of 100 iterations.
 float voltageThreshold = 1.0; //Because there might be some noise, we dont want to use 0, this means when this numer of volts is
                              // surpassed on the sensor, we will issue a command
 int STATE = 0; //1=ON 0=OFF we will use this to know if we should again issue a command, if its 1 we should notissue a power on again, and
@@ -69,7 +71,7 @@ void loop() {
     BLE.stopScan();
     readVoltageLevel();
 
-    if (vIn > voltageThreshold) {
+    if (average_vIn > voltageThreshold) {
       powerOn(peripheral);
     } else {
       powerOff(peripheral);
@@ -129,9 +131,15 @@ void readVoltageLevel() {
   /* Read the current voltage level on the A0 analog input pin.
      This is used here to simulate the charge level of a battery.
   */
-  voltageSensorVal = analogRead(analogInPin);
-  vOut = (voltageSensorVal / 1024) * vCC;
-  vIn = vOut * factor;  
+  float total_vIn = 0;
+
+  for (int i = 0; i < 100; i++) {
+    voltageSensorVal = analogRead(analogInPin);
+    vOut = (voltageSensorVal / 1024.0) * vCC;
+    vIn = vOut * factor;
+    total_vIn += vIn;  // Add vIn to the total sum
+  }
+  average_vIn = total_vIn / 100; 
 }
 
 bool power(BLEDevice peripheral) {
@@ -164,5 +172,3 @@ bool power(BLEDevice peripheral) {
   Serial.println("Peripheral disconnected");
   return written;
 }
-
-
