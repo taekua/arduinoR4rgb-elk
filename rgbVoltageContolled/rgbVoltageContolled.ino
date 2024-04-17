@@ -1,13 +1,16 @@
 #include <ArduinoBLE.h>
 
-const char * mainControllerMac = "BE:16:75:00:33:1C"; //This is the address which we will connect into to turn on/off the lights
-char * targetCharacteristicUuid = "fff3";
+char * mainControllerName = "ELK-BLEDOM"; //This is the name
+char * mainControllerMac = ""; //If you have multiple ELK-Bledoms this is needed use a bluetooth scanner to get this from the controller you want to bind this to.
+                              //"BE:16:75:00:33:1C"; //This is the address which we will connect into to turn on/off the lights
+char * targetCharacteristicUuid = "fff3"; //This is hardcoded as the characteristic we need to write.
 
 float voltageThreshold = 1.0; //Because there might be some noise, we dont want to use 0, this means when this numer of volts is
                              // surpassed on the sensor, we will issue a command
 int STATE = 0; //1=ON 0=OFF we will use this to know if we should again issue a command, if its 1 we should notissue a power on again, and
                //if its off, we should not try to power off again as we would prevent the user from overriding manually with their phone
 
+//These are the data packets we need to send to the device we could do a lot more like control modes and colors but thats outside of the scope
 const uint8_t powerOnData[] = {0x7E, 0x00, 0x04, 0x00, 0x00, 0x01, 0xFF, 0x00, 0xEF}; // Hexadecimal value to write
 const uint8_t powerOffData[] = {0x7E, 0x00, 0x04, 0x00, 0x00, 0x00, 0xFF, 0x00, 0xEF}; // Hexadecimal value to write
 
@@ -25,14 +28,31 @@ void setup() {
   // the code in this function runs only once every time the arduino is powered on
   Serial.begin(9600); 
   pinMode(A0,INPUT); //We specify that this pin will be used for reading data  
-  Serial.begin(9600);
-  
+  Serial.begin(9600);  
   if (!BLE.begin()) {
     Serial.println("starting Bluetooth® Low Energy module failed!");
     while (1);
   } 
   //We start looking for the rgb controller
-  BLE.scanForAddress(mainControllerMac);  
+  BLEScan();
+}
+
+void BLEScan() {
+  if (strcmp(mainControllerMac, "" ) != 0 ) {
+    Serial.println("Scanning by mac");
+    BLE.scanForAddress(mainControllerName);
+  } else if (strcmp(mainControllerName, "" ) == 0 ) {
+    Serial.println("bad config");    
+  } else {
+    BLE.scan();  
+  }
+}
+
+bool startsWith(const char *pre, const char *str)
+{
+    size_t lenpre = strlen(pre),
+           lenstr = strlen(str);
+    return lenstr < lenpre ? false : memcmp(pre, str, lenpre) == 0;
 }
 
 void loop() {
@@ -40,6 +60,11 @@ void loop() {
   BLEDevice peripheral = BLE.available();
 
   if (peripheral) {
+    
+    if (!peripheral.localName().startsWith(mainControllerName)){
+      return;
+    }
+
     // stop scanning
     BLE.stopScan();
     readVoltageLevel();
@@ -50,7 +75,7 @@ void loop() {
       powerOff(peripheral);
     }
     // peripheral disconnected, start scanning again
-    BLE.scanForAddress(mainControllerMac);
+    BLEScan();
   }
   delay(1);
 }
@@ -72,6 +97,7 @@ void powerOff(BLEDevice peripheral) {
     }
   }
 }
+
 
 BLECharacteristic discoveryProcess(BLEDevice peripheral) {  
   Serial.println("Discovering attributes ...");
